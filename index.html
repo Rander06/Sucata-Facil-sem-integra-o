@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Sucata Fácil - Gestão de Reciclagem</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            screens: {
+              'print': {'raw': 'print'},
+              'xs': '375px',
+            },
+            colors: {
+              emerald: {
+                50: '#ecfdf5',
+                100: '#d1fae5',
+                200: '#a7f3d0',
+                300: '#6ee7b7',
+                400: '#34d399',
+                500: '#10b981',
+                600: '#059669',
+                700: '#047857',
+                800: '#065f46',
+                900: '#064e3b',
+                950: '#022c22',
+              },
+            },
+            fontFamily: {
+              mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', "Liberation Mono", "Courier New", 'monospace'],
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      /* Ajustes globais para mobile */
+      body, html {
+        overscroll-behavior-y: none; /* Previne o 'bounce' no pull-to-refresh em apps web */
+      }
+
+      /* Scrollbar mais fina para mobile/web */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #ccc; 
+        border-radius: 3px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #aaa; 
+      }
+
+      /* --- ESTILOS DE IMPRESSÃO OTIMIZADOS --- */
+      @media print {
+        @page {
+          margin: 0; /* Remove margens do navegador para aproveitar o papel térmico */
+          size: auto; 
+        }
+
+        /* RESET CRÍTICO: Remove restrições de altura e overflow do layout SPA */
+        html, body, #root {
+          width: 100% !important;
+          height: auto !important;
+          min-height: 0 !important;
+          overflow: visible !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          display: block !important;
+          background: white !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+
+        /* Desabilita classes Tailwind que travam a rolagem/altura */
+        .h-screen, .min-h-screen, .h-full, .flex, .flex-col, .overflow-hidden, .overflow-y-auto, .overflow-x-hidden {
+            display: block !important;
+            height: auto !important;
+            overflow: visible !important;
+            position: static !important;
+        }
+        
+        /* Garante que o container principal expanda */
+        main {
+            display: block !important;
+            width: 100% !important;
+            height: auto !important;
+            overflow: visible !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* Oculta elementos de UI do sistema */
+        .no-print, nav, aside, header, button:not(.print-visible), .sidebar-container, .toast-container, .shadow-md, .shadow-xl, .shadow-sm {
+          display: none !important;
+          box-shadow: none !important;
+        }
+        
+        /* Remove scrollbars visuais na impressão */
+        ::-webkit-scrollbar {
+          display: none;
+        }
+
+        /* LÓGICA PARA RECIBOS (MODAIS) */
+        
+        /* 1. Se existir um modal de recibo aberto, oculta TUDO no corpo */
+        body:has(.receipt-modal-overlay) * {
+            visibility: hidden;
+        }
+
+        /* 2. Torna visível apenas o modal e seus filhos */
+        body:has(.receipt-modal-overlay) .receipt-modal-overlay,
+        body:has(.receipt-modal-overlay) .receipt-modal-overlay * {
+            visibility: visible;
+        }
+
+        /* 3. Posiciona o modal no topo da folha de impressão */
+        body:has(.receipt-modal-overlay) .receipt-modal-overlay {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: white !important;
+            display: block !important;
+        }
+
+        /* Remove estilos de card/modal para parecer documento */
+        .receipt-content {
+            box-shadow: none !important;
+            border: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            max-width: none !important;
+        }
+        
+        /* --- ESTILOS ESPECÍFICOS TÉRMICA (CUPOM 80mm) --- */
+        .print-thermal {
+            width: 78mm !important; /* Largura segura para 80mm */
+            max-width: 78mm !important;
+            margin: 0 auto !important;
+            padding: 0 0 5mm 0 !important;
+            font-family: 'Courier New', Courier, monospace !important; /* Fonte monoespaçada para alinhamento */
+            font-size: 12px !important;
+            color: black !important;
+            line-height: 1.2 !important;
+        }
+
+        .print-thermal h1, .print-thermal h2, .print-thermal h3 {
+            color: black !important;
+            text-align: center !important;
+            margin: 2px 0 !important;
+        }
+
+        .print-thermal table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            font-size: 11px !important;
+        }
+        
+        .print-thermal th, .print-thermal td {
+            border: none !important;
+            border-bottom: 1px dashed #000 !important; /* Linha pontilhada estilo cupom */
+            padding: 4px 0 !important;
+        }
+
+        .print-thermal .dashed-line {
+            border-bottom: 1px dashed #000 !important;
+            margin: 5px 0 !important;
+            display: block !important;
+            width: 100% !important;
+        }
+        
+        /* Utilitários de ocultar/mostrar baseados no formato */
+        .hide-on-thermal {
+            display: none !important;
+        }
+
+        /* --- ESTILOS A4 (RELATÓRIOS) --- */
+        .print-a4 {
+            width: 100% !important;
+            font-size: 12px !important;
+        }
+        
+        .print-a4 table {
+            width: 100% !important;
+            border-collapse: collapse;
+        }
+        
+        .print-a4 th, .print-a4 td {
+            padding: 4px 6px !important;
+            border: 1px solid #ccc !important;
+        }
+
+        /* Ajuste de cores para economia e contraste */
+        * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+        
+        /* Força texto preto puro para legibilidade */
+        p, h1, h2, h3, span, div, td {
+            color: #000 !important;
+        }
+    }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.6",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "recharts": "https://aistudiocdn.com/recharts@^3.4.1"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-gray-50 text-gray-900 font-sans antialiased overflow-x-hidden">
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
